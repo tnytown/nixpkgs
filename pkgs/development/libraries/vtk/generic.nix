@@ -90,6 +90,7 @@
   # and the input hdf5 used by most downstream packages,
   # we set mpiSupport to false by default.
   mpiSupport ? false,
+  occtSupport ? true,
   pythonSupport ? false,
 
   # passthru.tests
@@ -158,7 +159,6 @@ stdenv.mkDerivation (finalAttrs: {
     postgresql
     libmysqlclient
     ffmpeg
-    opencascade-occt
     fontconfig
     openturns
     libarchive
@@ -171,6 +171,7 @@ stdenv.mkDerivation (finalAttrs: {
     libXcursor
   ]
   ++ lib.optional (!(isNull qtPackages)) qtPackages.qttools
+  ++ lib.optional occtSupport opencascade-occt
   ++ lib.optional mpiSupport mpi
   ++ lib.optional pythonSupport tk;
 
@@ -275,6 +276,9 @@ stdenv.mkDerivation (finalAttrs: {
     # qtSupport
     (vtkBool "VTK_GROUP_ENABLE_Qt" (!(isNull qtPackages)))
     (lib.cmakeFeature "VTK_QT_VERSION" "Auto") # will search for Qt6 first
+
+    # occtSupport
+    (vtkBool "VTK_MODULE_ENABLE_VTK_IOOCCT" occtSupport)
 
     # pythonSupport
     (lib.cmakeBool "VTK_USE_TK" pythonSupport)

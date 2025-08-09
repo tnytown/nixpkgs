@@ -13,8 +13,17 @@
   libXext,
   libXmu,
   libXi,
+  vtk,
+
+  enableExceptions ? false,
+  vtkSupport ? false,
 }:
 
+let
+  vtkWithoutOcct = vtk.override {
+    occtSupport = false;
+  };
+in
 stdenv.mkDerivation rec {
   pname = "opencascade-occt";
   version = "7.8.1";
@@ -49,10 +58,20 @@ stdenv.mkDerivation rec {
     libXmu
     libXi
     rapidjson
-  ];
+  ]
+  ++ lib.optional vtkSupport vtk;
 
   NIX_CFLAGS_COMPILE = [ "-fpermissive" ];
-  cmakeFlags = [ "-DUSE_RAPIDJSON=ON" ];
+  cmakeFlags = [
+    "-DUSE_RAPIDJSON=ON"
+
+    # BUILD_RELEASE_DISABLE_EXCEPTIONS is ON by default
+    (lib.cmakeBool "BUILD_RELEASE_DISABLE_EXCEPTIONS" (!enableExceptions))
+  ] ++ lib.optionals vtkSupport [
+    (lib.cmakeBool "USE_VTK" true)
+    (lib.cmakeFeature "3RDPARTY_VTK_LIBRARY_DIR" "${vtk}/lib")
+    (lib.cmakeFeature "3RDPARTY_VTK_INCLUDE_DIR" "${vtk}/include/vtk")
+  ];
 
   meta = with lib; {
     description = "Open CASCADE Technology, libraries for 3D modeling and numerical simulation";
